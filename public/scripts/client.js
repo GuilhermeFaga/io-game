@@ -4,24 +4,24 @@ const ZOOM_HEIGHT_MIN = 6 // The larger the value the 'closer' you can see..
 const CUTSCENE_STARTING_HEIGHT = 50
 
 var scene = new THREE.Scene()
-var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 )
+var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 
 var renderer = new THREE.WebGLRenderer(
-{
-  antilias: true
-})
-renderer.setSize( window.innerWidth, window.innerHeight )
-document.body.appendChild( renderer.domElement )
+  {
+    antilias: true
+  })
+renderer.setSize(window.innerWidth, window.innerHeight)
+document.body.appendChild(renderer.domElement)
 
 
 const game = new Game()
 
 animate()
 
-window.addEventListener( 'resize', onWindowResize, false )
-window.addEventListener( 'keydown', onKeyDown)
-window.addEventListener( 'keyup', onKeyUp)
-window.addEventListener( 'wheel', onMouseScroll)
+window.addEventListener('resize', onWindowResize, false)
+window.addEventListener('keydown', onKeyDown)
+window.addEventListener('keyup', onKeyUp)
+window.addEventListener('wheel', onMouseScroll)
 
 function onMouseScroll(e) {
   if (game.zoom <= ZOOM_HEIGHT_MIN && game.zoom >= ZOOM_HEIGHT_MAX) game.zoom -= e.deltaY / 250 / 1.5
@@ -30,25 +30,19 @@ function onMouseScroll(e) {
 }
 
 function handleChat(key) {
-  if (!game.playing) return
   if (key == "Enter") {
-    if (!Chat.isChatFocused()) {
-      Chat.focusChat()
-    } else {
-      if (!Chat.isInputEmpty()) {
-        game.socket.emit('text', Chat.getInputText())
-        Chat.resetInput()
-      }
-      
-      Chat.blurChat()
+    if (!Chat.isChatFocused() && !Chat.isInputEmpty()) {
+      game.socket.emit('text', Chat.filterMessage(Chat.getInputText()))
+      Chat.resetInput()
     }
+    Chat.toggle()
   }
 }
 
-function onKeyDown(e){
+function onKeyDown(e) {
   if (game.playing) {
     handleChat(e.key)
-    
+
     switch (e.key) {
       case "w":
         game.player.movingUp = true
@@ -68,7 +62,7 @@ function onKeyDown(e){
   }
 }
 
-function onKeyUp(e){
+function onKeyUp(e) {
   if (game.playing) {
     switch (e.key) {
       case "w":
@@ -89,11 +83,11 @@ function onKeyUp(e){
   }
 }
 
-function onWindowResize(){
-    camera.aspect = window.innerWidth / window.innerHeight
-    camera.updateProjectionMatrix()
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight
+  camera.updateProjectionMatrix()
 
-    renderer.setSize( window.innerWidth, window.innerHeight)
+  renderer.setSize(window.innerWidth, window.innerHeight)
 }
 
 function handleCamera() {
@@ -102,7 +96,7 @@ function handleCamera() {
 
   // Lerp scene transition for a smooth effect.
   game.cutSceneDropValue = THREE.Math.lerp(game.cutSceneDropValue, CUTSCENE_STARTING_HEIGHT, 0.03)
-  
+
   const z = CAMERA_HEIGHT - game.currentZoom + CUTSCENE_STARTING_HEIGHT - game.cutSceneDropValue
   camera.position.z = z;
 
@@ -110,36 +104,36 @@ function handleCamera() {
 
 function animate() {
   setupPlayer()
-  
+
   if (game.playing) {
     handleCamera()
     handlePlayerMovement()
   }
-  
-	requestAnimationFrame( animate );
-  
+
+  requestAnimationFrame(animate);
+
   //cube.rotation.x += 0.01;
   //cube.rotation.y += 0.01;
 
-	renderer.render( scene, camera );
+  renderer.render(scene, camera);
 }
 
 function handlePlayerMovement() {
-  if (Chat.isChatFocused()) // Do not let player move if their typing a message.
+  if (!Chat.isChatFocused()) // Do not let player move if their typing a message.
     return
-  if (game.player.movingUp){
+  if (game.player.movingUp) {
     game.player.move(new THREE.Vector3(0, 1, 0), 0.05)
     game.sendData = true
-  } 
-  if (game.player.movingDown){
+  }
+  if (game.player.movingDown) {
     game.player.move(new THREE.Vector3(0, -1, 0), 0.05)
     game.sendData = true
-  } 
-  if (game.player.movingRight){
+  }
+  if (game.player.movingRight) {
     game.player.move(new THREE.Vector3(1, 0, 0), 0.05)
     game.sendData = true
-  } 
-  if (game.player.movingLeft){
+  }
+  if (game.player.movingLeft) {
     game.player.move(new THREE.Vector3(-1, 0, 0), 0.05)
     game.sendData = true
   }
