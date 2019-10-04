@@ -27,8 +27,7 @@ setInterval(() => {
   const entries = Object.entries(players)
   for (const [key, value] of entries) {
     playerTransforms[key] = new PlayerTransform({
-      x: value.x,
-      y: value.y,
+      position: value.position,
       angle: value.angle
     })
   }
@@ -39,8 +38,7 @@ setInterval(() => {
 io.on('connection', (socket) => {
   socket.on('new_player', (data) => {
     players[socket.id] = new Player({
-      x: data.x,
-      y: data.y,
+      position: data.position,
       name: data.name
     })
 
@@ -54,8 +52,7 @@ io.on('connection', (socket) => {
     const player = players[socket.id]
 
     if (player !== undefined) {
-      player.x = data.x
-      player.y = data.y
+      player.position = data.position,
       player.angle = data.angle
     }
   })

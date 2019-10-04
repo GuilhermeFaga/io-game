@@ -1,5 +1,5 @@
 class Player extends LivingEntity {
-  constructor (a) {
+  constructor(a) {
     super(a)
     this.id = 0
 
@@ -13,19 +13,21 @@ class Player extends LivingEntity {
     this.storedMessage = ''
 
     this.messageTimeout
-    
-    this.geometry = new THREE.BoxGeometry( 1, 1, 1 )
-    this.material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } )
-    this.cube = new THREE.Mesh( this.geometry, this.material )
-    scene.add( this.cube )
-    
+
+    this.position = a.position
+
+    this.geometry = new THREE.BoxGeometry(1, 1, 1)
+    this.material = new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+    this.cube = new THREE.Mesh(this.geometry, this.material)
+    scene.add(this.cube)
+
     this.movingUp
     this.movingDown
     this.movingLeft
     this.movingRight
   }
 
-  draw () {
+  draw() {
     if (this.client) {
       this.angle = parseFloat(angleTowardsMouse().toFixed(2))
     }
@@ -38,7 +40,7 @@ class Player extends LivingEntity {
     //this.drawNonRotatingElements()
   }
 
-  updateMessage (message) {
+  updateMessage(message) {
     clearTimeout(this.messageTimeout)
     this.message = message
     this.messageTimeout = setTimeout(() => {
@@ -46,23 +48,23 @@ class Player extends LivingEntity {
     }, 10 * 1000)
   }
 
-  clearMessage () {
+  clearMessage() {
     this.message = ''
   }
 
-  drawNonRotatingElements () {
+  drawNonRotatingElements() {
     this.drawName()
     this.drawMessage()
   }
 
-  drawName () {
+  drawName() {
     push()
     fill(0)
     text(this.name, this.x - textWidth(this.name) / 2, this.y - this.size / 2 - textDescent())
     pop()
   }
 
-  drawMessage () {
+  drawMessage() {
     if (this.message == '') return
     push()
     fill(0, 200)
@@ -86,15 +88,54 @@ class Player extends LivingEntity {
 
     pop()
   }*/
-  
+
+  dispose(){
+    this.cube.geometry.dispose()
+    this.cube.material.dispose()
+    scene.remove(this.cube)
+  }
+
   move(direction, speed) {
     this.cube.translateOnAxis(direction, speed)
+    this.position = this.cube.position
+    // console.log(this.position)
   }
-  
-  handleMovement(){
-    //if (
-    this.cube.translateOnAxis(new THREE.Vector3(0, 1, 0), 0.1)
+
+  updatePos(pos) {
+    this.position = pos
+    this.cube.position.set(pos.x, pos.y, pos.z)
   }
+
+  static handleMovement(game) {
+    if (!Chat.isChatFocused()) // Do not let player move if their typing a message.
+      return
+    if (game.player.movingUp) {
+      game.player.move(new THREE.Vector3(0, 1, 0), 0.05)
+      game.sendData = true
+    }
+    if (game.player.movingDown) {
+      game.player.move(new THREE.Vector3(0, -1, 0), 0.05)
+      game.sendData = true
+    }
+    if (game.player.movingRight) {
+      game.player.move(new THREE.Vector3(1, 0, 0), 0.05)
+      game.sendData = true
+    }
+    if (game.player.movingLeft) {
+      game.player.move(new THREE.Vector3(-1, 0, 0), 0.05)
+      game.sendData = true
+    }
+
+    game.socket.emit('player_transform', {
+      position: game.player.position,
+      angle: game.player.angle
+    })
+  }
+
+  // handleMovement(){
+  //   //if (
+  //   this.cube.translateOnAxis(new THREE.Vector3(0, 1, 0), 0.1)
+  // }
 
   /*handleMovement () {
     if (!Chat.isChatFocused()) // Do not let player move if their typing a message.
